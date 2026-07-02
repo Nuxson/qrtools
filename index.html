@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#7aa2f7" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="QRTools" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+  <title>QRTools</title>
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>QRTools</h1>
+      <p class="subtitle">Шифрованные QR-коды и штрихкоды</p>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab active" data-tab="generate">Генерация QR</button>
+      <button class="tab" data-tab="scan">Сканирование</button>
+      <button class="tab" data-tab="keys">Ключи</button>
+    </nav>
+
+    <!-- Генерация QR -->
+    <section id="tab-generate" class="tab-content active">
+      <div class="panel">
+        <h2>Создать шифрованный QR-код</h2>
+        <div class="form-group">
+          <label for="plain-text">Данные для шифрования:</label>
+          <textarea id="plain-text" rows="4" placeholder="Введите текст, ссылку или данные..."></textarea>
+        </div>
+        <div class="form-group">
+          <label for="qr-size">Размер (px):</label>
+          <input type="number" id="qr-size" value="400" min="100" max="2000" step="50" />
+        </div>
+        <button id="btn-generate" class="btn primary">Зашифровать и сгенерировать</button>
+        <div id="qr-result" class="result-area hidden">
+          <img id="qr-image" alt="QR Code" />
+          <div class="actions">
+            <button id="btn-save-qr" class="btn">Сохранить PNG</button>
+            <button id="btn-copy-encrypted" class="btn">Копировать зашифрованный текст</button>
+          </div>
+        </div>
+        <div id="encrypted-text-display" class="hidden">
+          <label>Зашифрованный текст:</label>
+          <textarea id="encrypted-text" readonly rows="3"></textarea>
+        </div>
+      </div>
+    </section>
+
+    <!-- Сканирование -->
+    <section id="tab-scan" class="tab-content">
+      <div class="panel">
+        <h2>Сканировать QR/Штрихкод</h2>
+        <div class="scan-options">
+          <button id="btn-open-image" class="btn">Открыть изображение</button>
+          <button id="btn-paste-image" class="btn">Вставить из буфера</button>
+        </div>
+        <div id="scan-preview" class="hidden">
+          <img id="scan-image" alt="Scanned" />
+        </div>
+        <div id="scan-results" class="result-area hidden">
+          <h3>Найденные коды:</h3>
+          <div id="scan-codes-list"></div>
+          <div class="decrypt-section">
+            <button id="btn-decrypt" class="btn primary">Расшифровать выбранный</button>
+          </div>
+        </div>
+        <div id="decrypted-result" class="result-area hidden">
+          <h3>Расшифрованные данные:</h3>
+          <textarea id="decrypted-text" readonly rows="4"></textarea>
+          <button id="btn-copy-decrypted" class="btn">Копировать</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Ключи -->
+    <section id="tab-keys" class="tab-content">
+      <div class="panel">
+        <h2>Управление ключами</h2>
+        <div class="key-section">
+          <h3>Новый ключ</h3>
+          <button id="btn-gen-key" class="btn primary">Сгенерировать новый ключ</button>
+          <div id="new-key-display" class="hidden">
+            <label>Ваш ключ (сохраните его!):</label>
+            <textarea id="new-key" readonly rows="2"></textarea>
+            <button id="btn-copy-key" class="btn">Копировать ключ</button>
+          </div>
+        </div>
+        <hr />
+        <div class="key-section">
+          <h3>Загрузить существующий ключ</h3>
+          <div class="form-group">
+            <input type="text" id="load-key-input" placeholder="Вставьте ключ сюда..." />
+          </div>
+          <button id="btn-load-key" class="btn primary">Активировать ключ</button>
+        </div>
+        <div id="key-status" class="status"></div>
+        <hr />
+        <div class="key-section">
+          <h3>Экспорт/Импорт ключей</h3>
+          <button id="btn-export-key" class="btn">Экспорт в файл</button>
+          <button id="btn-import-key" class="btn">Импорт из файла</button>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <p id="status-bar">Готов</p>
+    </footer>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
