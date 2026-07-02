@@ -288,3 +288,54 @@ footer {
   border-radius: 6px;
   display: inline-block;
 }
+
+#scan-image-wrapper {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  margin-bottom: 16px;
+}
+
+#scan-image-wrapper img {
+  display: block;
+  max-width: 100%;
+  max-height: 400px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+#region-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+  background: rgba(122, 162, 247, 0.08);
+  border-radius: var(--radius);
+  z-index: 10;
+}
+
+#region-overlay .region-box {
+  position: absolute;
+  border: 2px dashed var(--accent);
+  background: rgba(122, 162, 247, 0.15);
+  pointer-events: none;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.3);
+}
+
+#region-overlay::after {
+  content: 'Обведите область QR/штрихкода';
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(26, 27, 38, 0.9);
+  color: var(--accent);
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  pointer-events: none;
+  border: 1px solid var(--border);
+}

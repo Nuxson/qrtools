@@ -2,6 +2,11 @@ import * as webCrypto from "./web-crypto";
 
 let isTauri = false;
 let tauriInvoke: ((cmd: string, args?: Record<string, unknown>) => Promise<unknown>) | null = null;
+let regionSelectActive = false;
+let regionStartX = 0;
+let regionStartY = 0;
+let regionOverlay: HTMLDivElement | null = null;
+let regionRect: HTMLDivElement | null = null;
 
 async function detectPlatform() {
   try {
@@ -334,6 +339,7 @@ async function processScannedImageTauri(imageData: Uint8Array) {
   const scanImg = document.getElementById("scan-image") as HTMLImageElement;
   if (preview && scanImg) {
     scanImg.src = URL.createObjectURL(new Blob([imageData]));
+    scanImg.onload = () => showRegionButton();
     preview.classList.remove("hidden");
   }
 
@@ -359,6 +365,7 @@ async function processScannedImageWeb(fileOrBlob: File | Blob) {
   const scanImg = document.getElementById("scan-image") as HTMLImageElement;
   if (preview && scanImg) {
     scanImg.src = URL.createObjectURL(fileOrBlob);
+    scanImg.onload = () => showRegionButton();
     preview.classList.remove("hidden");
   }
 
@@ -478,5 +485,141 @@ const tempContainer = document.createElement("div");
 tempContainer.id = "scan-temp-container";
 tempContainer.style.display = "none";
 document.body.appendChild(tempContainer);
+
+// ===== REGION SELECTION =====
+
+let currentImageElement: HTMLImageElement | null = null;
+
+function setupRegionSelector() {
+  const overlay = document.getElementById("region-overlay");
+  const wrapper = document.getElementById("scan-image-wrapper");
+  const selectBtn = document.getElementById("btn-select-region");
+
+  if (!overlay || !wrapper || !selectBtn) return;
+
+  selectBtn.addEventListener("click", () => {
+    regionSelectActive = !regionSelectActive;
+    if (regionSelectActive) {
+      overlay.classList.remove("hidden");
+      selectBtn.textContent = "Отменить выделение";
+      selectBtn.classList.add("active-region");
+      setStatus("Обведите область на изображении");
+    } else {
+      overlay.classList.add("hidden");
+      selectBtn.textContent = "Выделить область";
+      selectBtn.classList.remove("active-region");
+      const box = overlay.querySelector(".region-box");
+      if (box) box.remove();
+    }
+  });
+
+  overlay.addEventListener("mousedown", (e) => {
+    if (!regionSelectActive) return;
+    e.preventDefault();
+    const rect = overlay.getBoundingClientRect();
+    regionStartX = e.clientX - rect.left;
+    regionStartY = e.clientY - rect.top;
+
+    let box = overlay.querySelector(".region-box") as HTMLDivElement;
+    if (!box) {
+      box = document.createElement("div");
+      box.className = "region-box";
+      overlay.appendChild(box);
+    }
+    box.style.left = regionStartX + "px";
+    box.style.top = regionStartY + "px";
+    box.style.width = "0px";
+    box.style.height = "0px";
+    regionRect = box;
+  });
+
+  overlay.addEventListener("mousemove", (e) => {
+    if (!regionSelectActive || !regionRect) return;
+    e.preventDefault();
+    const rect = overlay.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const left = Math.min(regionStartX, x);
+    const top = Math.min(regionStartY, y);
+    const width = Math.abs(x - regionStartX);
+    const height = Math.abs(y - regionStartY);
+    regionRect.style.left = left + "px";
+    regionRect.style.top = top + "px";
+    regionRect.style.width = width + "px";
+    regionRect.style.height = height + "px";
+  });
+
+  overlay.addEventListener("mouseup", async (e) => {
+    if (!regionSelectActive || !regionRect) return;
+    e.preventDefault();
+    const rect = overlay.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const left = Math.min(regionStartX, x);
+    const top = Math.min(regionStartY, y);
+    const width = Math.abs(x - regionStartX);
+    const height = Math.abs(y - regionStartY);
+
+    if (width < 20 || height < 20) return;
+
+    regionSelectActive = false;
+    overlay.classList.add("hidden");
+    selectBtn.textContent = "Выделить область";
+    selectBtn.classList.remove("active-region");
+
+    const img = document.getElementById("scan-image") as HTMLImageElement;
+    if (!img || !img.naturalWidth) return;
+
+    const displayW = img.clientWidth;
+    const displayH = img.clientHeight;
+    const scaleX = img.naturalWidth / displayW;
+    const scaleY = img.naturalHeight / displayH;
+
+    const cropX = left * scaleX;
+    const cropY = top * scaleY;
+    const cropW = width * scaleX;
+    const cropH = height * scaleY;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = cropW;
+    canvas.height = cropH;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+
+    canvas.toBlob(async (blob) => {
+      if (!blob) return;
+      setStatus("Сканирование выделенной области...");
+      try {
+        const { Html5Qrcode } = await import("html5-qrcode");
+        const scanner = new Html5Qrcode("scan-temp-container");
+        const dataURL = canvas.toDataURL("image/png");
+        const decoded = await scanner.scanFile(dataURL, true);
+        scanner.clear();
+        showScanResults([decoded]);
+      } catch (err) {
+        showError("Код не найден в выделенной области: " + String(err));
+      }
+    }, "image/png");
+  });
+
+  overlay.addEventListener("mouseleave", () => {
+    if (regionSelectActive && regionRect) {
+      const w = parseFloat(regionRect.style.width);
+      const h = parseFloat(regionRect.style.height);
+      if (w < 10 && h < 10) {
+        regionRect.remove();
+        regionRect = null;
+      }
+    }
+  });
+}
+
+function showRegionButton() {
+  const btn = document.getElementById("btn-select-region");
+  if (btn) btn.classList.remove("hidden");
+}
+
+setupRegionSelector();
 
 detectPlatform();

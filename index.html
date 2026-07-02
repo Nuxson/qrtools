@@ -59,9 +59,13 @@
         <div class="scan-options">
           <button id="btn-open-image" class="btn">Открыть изображение</button>
           <button id="btn-paste-image" class="btn">Вставить из буфера</button>
+          <button id="btn-select-region" class="btn hidden">Выделить область</button>
         </div>
         <div id="scan-preview" class="hidden">
-          <img id="scan-image" alt="Scanned" />
+          <div id="scan-image-wrapper">
+            <img id="scan-image" alt="Scanned" />
+            <div id="region-overlay" class="hidden"></div>
+          </div>
         </div>
         <div id="scan-results" class="result-area hidden">
           <h3>Найденные коды:</h3>
