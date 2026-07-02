@@ -1,8 +1,7 @@
-const CACHE_NAME = "qrtools-v1";
-const ASSETS = ["/", "/index.html", "/assets/index.js", "/assets/index.css"];
+const CACHE_NAME = "qrtools-v2";
+const BASE = new URL("./", self.registration.scope).pathname;
 
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE_NAME).then((c) => c.addAll(ASSETS)));
   self.skipWaiting();
 });
 
@@ -16,7 +15,14 @@ self.addEventListener("activate", (e) => {
 });
 
 self.addEventListener("fetch", (e) => {
+  if (e.request.method !== "GET") return;
   e.respondWith(
-    caches.match(e.request).then((r) => r || fetch(e.request))
+    fetch(e.request)
+      .then((response) => {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then((c) => c.put(e.request, clone));
+        return response;
+      })
+      .catch(() => caches.match(e.request))
   );
 });
