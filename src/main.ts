@@ -26,16 +26,17 @@ async function detectPlatform() {
 let selectedScanCode: string | null = null;
 
 // Tabs
-document.querySelectorAll("#tabs .nav-link").forEach((tab) => {
+document.querySelectorAll(".tab").forEach((tab) => {
   tab.addEventListener("click", () => {
-    document.querySelectorAll("#tabs .nav-link").forEach((t) => t.classList.remove("active"));
-    document.querySelectorAll(".tab-pane").forEach((c) => {
-      c.classList.remove("show", "active");
+    document.querySelectorAll(".tab").forEach((t) => {
+      t.classList.remove("bg-blue-600", "text-white");
+      t.classList.add("text-dark-400");
     });
-    tab.classList.add("active");
+    document.querySelectorAll(".tab-content").forEach((c) => c.classList.add("hidden"));
+    tab.classList.add("bg-blue-600", "text-white");
+    tab.classList.remove("text-dark-400");
     const tabId = (tab as HTMLElement).dataset.tab;
-    const pane = document.getElementById(`tab-${tabId}`);
-    if (pane) pane.classList.add("show", "active");
+    document.getElementById(`tab-${tabId}`)?.classList.remove("hidden");
   });
 });
 
@@ -48,18 +49,21 @@ function showError(msg: string) {
   setStatus(`Ошибка: ${msg}`);
 }
 
-function showAlert(id: string, msg: string, type: string) {
-  const el = document.getElementById(id);
-  if (el) {
-    el.className = `alert alert-${type}`;
-    el.textContent = msg;
-    el.classList.remove("d-none");
-  }
+function showStatusAlert(msg: string, type: "success" | "warning" | "error") {
+  const el = document.getElementById("scan-status");
+  if (!el) return;
+  const colors = {
+    success: "bg-green-900/40 border-green-600/50 text-green-300",
+    warning: "bg-amber-900/40 border-amber-600/50 text-amber-300",
+    error: "bg-red-900/40 border-red-600/50 text-red-300",
+  };
+  el.className = `px-3 py-2 rounded-lg text-sm border ${colors[type]}`;
+  el.textContent = msg;
+  el.classList.remove("hidden");
 }
 
-function hideAlert(id: string) {
-  const el = document.getElementById(id);
-  if (el) el.classList.add("d-none");
+function hideStatusAlert() {
+  document.getElementById("scan-status")?.classList.add("hidden");
 }
 
 // ===== QR GENERATION =====
@@ -81,7 +85,7 @@ document.getElementById("btn-generate")?.addEventListener("click", async () => {
     const img = document.getElementById("qr-image") as HTMLImageElement;
     if (img) {
       img.src = qrDataUrl;
-      document.getElementById("qr-result")?.classList.remove("d-none");
+      document.getElementById("qr-result")?.classList.remove("hidden");
     }
     setStatus("QR-код сгенерирован");
   } catch (e) {
@@ -188,7 +192,7 @@ async function processScannedImageTauri(imageData: Uint8Array) {
   if (preview && scanImg) {
     scanImg.src = URL.createObjectURL(new Blob([imageData]));
     scanImg.onload = () => showRegionButton();
-    preview.classList.remove("d-none");
+    preview.classList.remove("hidden");
   }
 
   try {
@@ -214,7 +218,7 @@ async function processScannedImageWeb(fileOrBlob: File | Blob) {
   if (preview && scanImg) {
     scanImg.src = URL.createObjectURL(fileOrBlob);
     scanImg.onload = () => showRegionButton();
-    preview.classList.remove("d-none");
+    preview.classList.remove("hidden");
   }
 
   try {
@@ -244,30 +248,35 @@ function blobToDataURL(blob: Blob): Promise<string> {
 function showScanResults(codes: string[]) {
   const codesList = document.getElementById("scan-codes-list");
   const resultsDiv = document.getElementById("scan-results");
-  const scanStatus = document.getElementById("scan-status");
 
   if (codesList && resultsDiv) {
     codesList.innerHTML = "";
-    hideAlert("scan-status");
+    hideStatusAlert();
 
     if (codes.length === 0) {
-      codesList.innerHTML = '<div class="list-group-item text-body-secondary">Коды не найдены</div>';
+      codesList.innerHTML = '<p class="text-dark-500 text-sm">Коды не найдены</p>';
     } else {
       codes.forEach((code, idx) => {
+        const isOwn = isOwnFormat(code);
+        const preview = code.length > 80 ? code.substring(0, 80) + "..." : code;
         const item = document.createElement("button");
         item.type = "button";
-        item.className = `list-group-item list-group-item-action ${idx === 0 ? "active" : ""}`;
-        const isOwn = isOwnFormat(code);
-        const preview = code.length > 100 ? code.substring(0, 100) + "..." : code;
+        item.className = `w-full text-left px-3 py-2.5 rounded-lg border text-sm transition-all ${
+          idx === 0
+            ? "bg-blue-600/20 border-blue-500/50 text-blue-200"
+            : "bg-dark-800 border-dark-700 text-dark-300 hover:bg-dark-700 hover:border-dark-600"
+        }`;
         item.innerHTML = `
-          <div class="d-flex justify-content-between align-items-center">
-            <span class="text-truncate" style="max-width: 80%;">${escapeHtml(preview)}</span>
-            <span class="badge ${isOwn ? "bg-success" : "bg-secondary"}">${isOwn ? "QRTools" : "Другой формат"}</span>
+          <div class="flex items-center justify-between gap-2">
+            <span class="truncate">${escapeHtml(preview)}</span>
+            <span class="shrink-0 text-xs px-2 py-0.5 rounded-full ${isOwn ? "bg-green-900/50 text-green-400" : "bg-dark-700 text-dark-400"}">${isOwn ? "QRTools" : "Другой"}</span>
           </div>
         `;
         item.addEventListener("click", () => {
-          codesList.querySelectorAll(".list-group-item").forEach((el) => el.classList.remove("active"));
-          item.classList.add("active");
+          codesList.querySelectorAll("button").forEach((el) => {
+            el.className = el.className.replace("bg-blue-600/20 border-blue-500/50 text-blue-200", "bg-dark-800 border-dark-700 text-dark-300");
+          });
+          item.className = item.className.replace("bg-dark-800 border-dark-700 text-dark-300", "bg-blue-600/20 border-blue-500/50 text-blue-200");
           selectedScanCode = code;
           decodeSelected(code);
         });
@@ -277,7 +286,7 @@ function showScanResults(codes: string[]) {
       selectedScanCode = codes[0];
       decodeSelected(codes[0]);
     }
-    resultsDiv.classList.remove("d-none");
+    resultsDiv.classList.remove("hidden");
     setStatus(`Найдено кодов: ${codes.length}`);
   }
 }
@@ -285,28 +294,23 @@ function showScanResults(codes: string[]) {
 function decodeSelected(code: string) {
   const resultArea = document.getElementById("decrypted-result");
   const resultText = document.getElementById("decrypted-text") as HTMLTextAreaElement;
-  const scanStatus = document.getElementById("scan-status");
 
   if (!isOwnFormat(code)) {
-    resultArea?.classList.add("d-none");
-    if (scanStatus) {
-      scanStatus.className = "alert alert-warning";
-      scanStatus.textContent = "Этот QR-код создан другим приложением. Только QR-коды QRTools можно прочитать.";
-      scanStatus.classList.remove("d-none");
-    }
+    resultArea?.classList.add("hidden");
+    showStatusAlert("Этот QR-код создан другим приложением. Только QR-коды QRTools можно прочитать.", "warning");
     return;
   }
 
-  hideAlert("scan-status");
+  hideStatusAlert();
 
   const decoded = decode(code);
   if (decoded) {
     if (resultText) resultText.value = decoded;
-    resultArea?.classList.remove("d-none");
+    resultArea?.classList.remove("hidden");
     setStatus("Данные прочитаны");
   } else {
     if (resultText) resultText.value = "Не удалось декодировать";
-    resultArea?.classList.remove("d-none");
+    resultArea?.classList.remove("hidden");
     showError("Ошибка декодирования");
   }
 }
@@ -335,7 +339,7 @@ document.body.appendChild(tempContainer);
 
 function showRegionButton() {
   const btn = document.getElementById("btn-select-region");
-  if (btn) btn.classList.remove("d-none");
+  if (btn) btn.classList.remove("hidden");
 }
 
 function setupRegionSelector() {
@@ -347,14 +351,16 @@ function setupRegionSelector() {
   selectBtn.addEventListener("click", () => {
     regionSelectActive = !regionSelectActive;
     if (regionSelectActive) {
-      overlay.classList.remove("d-none");
+      overlay.classList.remove("hidden");
       selectBtn.textContent = "Отменить выделение";
-      selectBtn.classList.replace("btn-outline-warning", "btn-warning");
+      selectBtn.classList.remove("bg-amber-900/40", "border-amber-600/50", "text-amber-300");
+      selectBtn.classList.add("bg-amber-600", "text-white", "border-amber-600");
       setStatus("Обведите область на изображении");
     } else {
-      overlay.classList.add("d-none");
+      overlay.classList.add("hidden");
       selectBtn.textContent = "Выделить область";
-      selectBtn.classList.replace("btn-warning", "btn-outline-warning");
+      selectBtn.classList.remove("bg-amber-600", "text-white", "border-amber-600");
+      selectBtn.classList.add("bg-amber-900/40", "border-amber-600/50", "text-amber-300");
       const box = overlay.querySelector(".region-box");
       if (box) box.remove();
     }
@@ -410,9 +416,10 @@ function setupRegionSelector() {
     if (width < 20 || height < 20) return;
 
     regionSelectActive = false;
-    overlay.classList.add("d-none");
+    overlay.classList.add("hidden");
     selectBtn.textContent = "Выделить область";
-    selectBtn.classList.replace("btn-warning", "btn-outline-warning");
+    selectBtn.classList.remove("bg-amber-600", "text-white", "border-amber-600");
+    selectBtn.classList.add("bg-amber-900/40", "border-amber-600/50", "text-amber-300");
 
     const img = document.getElementById("scan-image") as HTMLImageElement;
     if (!img || !img.naturalWidth) return;

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ru" data-bs-theme="dark">
+<html lang="ru" class="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#0d6efd" />
+  <meta name="theme-color" content="#3b82f6" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="QRTools" />
@@ -11,86 +11,95 @@
   <link rel="apple-touch-icon" href="/icons/icon-192.png" />
   <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
   <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            dark: { 50:'#f8fafc',100:'#f1f5f9',200:'#e2e8f0',300:'#cbd5e1',400:'#94a3b8',500:'#64748b',600:'#475569',700:'#334155',800:'#1e293b',900:'#0f172a',950:'#020617' }
+          }
+        }
+      }
+    }
+  </script>
   <title>QRTools</title>
 </head>
-<body>
-  <div id="app" class="container py-3" style="max-width: 600px;">
-    <header class="text-center mb-4">
-      <h1 class="h3 mb-1">QRTools</h1>
-      <p class="text-body-secondary small mb-0">Генерация и сканирование QR-кодов</p>
+<body class="bg-dark-950 text-dark-100 min-h-screen">
+  <div id="app" class="mx-auto max-w-lg px-4 py-6">
+
+    <header class="text-center mb-6">
+      <h1 class="text-2xl font-bold text-blue-400">QRTools</h1>
+      <p class="text-dark-400 text-sm">Генерация и сканирование QR-кодов</p>
     </header>
 
-    <ul class="nav nav-pills nav-fill mb-3" id="tabs">
-      <li class="nav-item">
-        <button class="nav-link active" data-tab="generate">Генерация</button>
-      </li>
-      <li class="nav-item">
-        <button class="nav-link" data-tab="scan">Сканирование</button>
-      </li>
-    </ul>
+    <!-- Tabs -->
+    <div class="flex gap-1 bg-dark-900 rounded-xl p-1 mb-4">
+      <button class="tab flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all bg-blue-600 text-white" data-tab="generate">Генерация</button>
+      <button class="tab flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all text-dark-400 hover:text-dark-200 hover:bg-dark-800" data-tab="scan">Сканирование</button>
+    </div>
 
     <!-- Генерация -->
-    <div id="tab-generate" class="tab-pane fade show active">
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">Создать QR-код</h5>
-          <div class="mb-3">
-            <label for="plain-text" class="form-label">Данные</label>
-            <textarea id="plain-text" class="form-control" rows="4" placeholder="Введите текст, ссылку или данные..."></textarea>
-          </div>
-          <div class="mb-3">
-            <label for="qr-size" class="form-label">Размер (px)</label>
-            <input type="number" id="qr-size" class="form-control" value="400" min="100" max="2000" step="50" style="width: 140px;" />
-          </div>
-          <button id="btn-generate" class="btn btn-primary w-100">Сгенерировать QR-код</button>
-          <div id="qr-result" class="mt-3 text-center d-none">
-            <img id="qr-image" class="img-fluid rounded border mb-2" alt="QR Code" style="max-width: 300px;" />
-            <div class="d-flex gap-2 justify-content-center">
-              <button id="btn-save-qr" class="btn btn-outline-secondary btn-sm">Сохранить PNG</button>
-              <button id="btn-copy-qr" class="btn btn-outline-secondary btn-sm">Копировать текст</button>
-            </div>
+    <div id="tab-generate" class="tab-content">
+      <div class="bg-dark-900 border border-dark-700 rounded-2xl p-5">
+        <h2 class="text-lg font-semibold text-blue-400 mb-4">Создать QR-код</h2>
+        <div class="mb-4">
+          <label for="plain-text" class="block text-dark-400 text-sm mb-1.5">Данные</label>
+          <textarea id="plain-text" class="w-full bg-dark-950 border border-dark-700 rounded-lg px-3 py-2.5 text-dark-100 text-sm resize-y focus:outline-none focus:border-blue-500 transition-colors" rows="4" placeholder="Введите текст, ссылку или данные..."></textarea>
+        </div>
+        <div class="mb-4">
+          <label for="qr-size" class="block text-dark-400 text-sm mb-1.5">Размер (px)</label>
+          <input type="number" id="qr-size" class="w-28 bg-dark-950 border border-dark-700 rounded-lg px-3 py-2 text-dark-100 text-sm focus:outline-none focus:border-blue-500 transition-colors" value="400" min="100" max="2000" step="50" />
+        </div>
+        <button id="btn-generate" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-colors">Сгенерировать QR-код</button>
+        <div id="qr-result" class="mt-4 text-center hidden">
+          <img id="qr-image" class="mx-auto rounded-lg border border-dark-700 mb-3" alt="QR Code" style="max-width: 300px;" />
+          <div class="flex gap-2 justify-center">
+            <button id="btn-save-qr" class="px-4 py-1.5 bg-dark-800 hover:bg-dark-700 border border-dark-600 rounded-lg text-sm text-dark-200 transition-colors">Сохранить PNG</button>
+            <button id="btn-copy-qr" class="px-4 py-1.5 bg-dark-800 hover:bg-dark-700 border border-dark-600 rounded-lg text-sm text-dark-200 transition-colors">Копировать текст</button>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Сканирование -->
-    <div id="tab-scan" class="tab-pane fade">
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">Сканировать QR/Штрихкод</h5>
-          <div class="d-flex gap-2 mb-3">
-            <button id="btn-open-image" class="btn btn-outline-primary flex-fill">Открыть изображение</button>
-            <button id="btn-paste-image" class="btn btn-outline-primary flex-fill">Из буфера</button>
+    <div id="tab-scan" class="tab-content hidden">
+      <div class="bg-dark-900 border border-dark-700 rounded-2xl p-5">
+        <h2 class="text-lg font-semibold text-blue-400 mb-4">Сканировать QR/Штрихкод</h2>
+        <div class="flex gap-2 mb-3">
+          <button id="btn-open-image" class="flex-1 py-2 px-4 bg-dark-800 hover:bg-dark-700 border border-dark-600 rounded-lg text-sm text-dark-200 transition-colors">Открыть изображение</button>
+          <button id="btn-paste-image" class="flex-1 py-2 px-4 bg-dark-800 hover:bg-dark-700 border border-dark-600 rounded-lg text-sm text-dark-200 transition-colors">Из буфера</button>
+        </div>
+        <button id="btn-select-region" class="w-full py-2 px-4 bg-amber-900/40 hover:bg-amber-800/50 border border-amber-600/50 rounded-lg text-sm text-amber-300 transition-colors hidden mb-3">Выделить область</button>
+
+        <div id="scan-preview" class="hidden mb-3">
+          <div id="scan-image-wrapper" class="relative inline-block w-full">
+            <img id="scan-image" class="w-full rounded-lg border border-dark-700" alt="Scanned" />
+            <div id="region-overlay" class="hidden"></div>
           </div>
-          <button id="btn-select-region" class="btn btn-outline-warning w-100 d-none mb-3">Выделить область</button>
-          <div id="scan-preview" class="d-none mb-3">
-            <div id="scan-image-wrapper" class="position-relative d-inline-block w-100">
-              <img id="scan-image" class="img-fluid rounded border" alt="Scanned" />
-              <div id="region-overlay" class="d-none"></div>
-            </div>
-          </div>
-          <div id="scan-results" class="d-none">
-            <h6>Найденные коды:</h6>
-            <div id="scan-codes-list" class="list-group mb-3"></div>
-            <div id="scan-status" class="alert d-none"></div>
-          </div>
-          <div id="decrypted-result" class="d-none">
-            <h6>Данные:</h6>
-            <textarea id="decrypted-text" class="form-control mb-2" readonly rows="4"></textarea>
-            <button id="btn-copy-decrypted" class="btn btn-outline-secondary btn-sm">Копировать</button>
-          </div>
+        </div>
+
+        <div id="scan-results" class="hidden">
+          <h3 class="text-sm font-medium text-dark-400 mb-2">Найденные коды:</h3>
+          <div id="scan-codes-list" class="space-y-1.5 mb-3"></div>
+        </div>
+
+        <div id="scan-status" class="hidden px-3 py-2 rounded-lg text-sm mb-3"></div>
+
+        <div id="decrypted-result" class="hidden">
+          <h3 class="text-sm font-medium text-dark-400 mb-2">Данные:</h3>
+          <textarea id="decrypted-text" class="w-full bg-dark-950 border border-dark-700 rounded-lg px-3 py-2.5 text-dark-100 text-sm resize-y mb-2 focus:outline-none focus:border-blue-500 transition-colors" readonly rows="4"></textarea>
+          <button id="btn-copy-decrypted" class="px-4 py-1.5 bg-dark-800 hover:bg-dark-700 border border-dark-600 rounded-lg text-sm text-dark-200 transition-colors">Копировать</button>
         </div>
       </div>
     </div>
 
-    <footer class="text-center mt-3">
-      <small id="status-bar" class="text-body-secondary">Готов</small>
+    <footer class="text-center mt-4">
+      <small id="status-bar" class="text-dark-500 text-xs">Готов</small>
     </footer>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script type="module" src="/src/main.ts"></script>
 </body>
 </html>
