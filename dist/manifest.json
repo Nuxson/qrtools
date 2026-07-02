@@ -2,21 +2,26 @@
   "name": "QRTools - Шифрованные QR-коды",
   "short_name": "QRTools",
   "description": "Шифрование и генерация QR-кодов с защитой AES-256",
-  "start_url": "./",
+  "id": "/qrtools/",
+  "start_url": "/qrtools/",
+  "scope": "/qrtools/",
   "display": "standalone",
   "background_color": "#1a1b26",
   "theme_color": "#7aa2f7",
   "orientation": "any",
+  "categories": ["utilities"],
   "icons": [
     {
-      "src": "./icons/icon-192.png",
+      "src": "/qrtools/icons/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "./icons/icon-512.png",
+      "src": "/qrtools/icons/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
