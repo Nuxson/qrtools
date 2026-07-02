@@ -1,41 +1,30 @@
-mod crypto;
 mod qr;
+mod screen;
 
-use crypto::CryptoEngine;
 use serde::Serialize;
-use std::sync::Mutex;
-use tauri::State;
-
-struct AppState {
-    crypto: Mutex<Option<CryptoEngine>>,
-    key: Mutex<Option<String>>,
-}
 
 #[derive(Serialize)]
-struct CryptoResult {
+struct ScanResult {
     success: bool,
     data: Option<String>,
     error: Option<String>,
 }
 
 #[tauri::command]
-fn generate_key() -> String {
-    crypto::generate_key()
-}
-
-#[tauri::command]
-fn set_key(state: State<'_, AppState>, key: String) -> CryptoResult {
-    match CryptoEngine::new(&key) {
-        Ok(engine) => {
-            *state.crypto.lock().unwrap() = Some(engine);
-            *state.key.lock().unwrap() = Some(key.clone());
-            CryptoResult {
+fn generate_qr(plaintext: String, size: u32) -> ScanResult {
+    match qr::generate_qr_png(&plaintext, size) {
+        Ok(png_bytes) => {
+            let b64 = base64::Engine::encode(
+                &base64::engine::general_purpose::STANDARD,
+                &png_bytes,
+            );
+            ScanResult {
                 success: true,
-                data: Some(key),
+                data: Some(format!("data:image/png;base64,{}", b64)),
                 error: None,
             }
         }
-        Err(e) => CryptoResult {
+        Err(e) => ScanResult {
             success: false,
             data: None,
             error: Some(e),
@@ -44,112 +33,17 @@ fn set_key(state: State<'_, AppState>, key: String) -> CryptoResult {
 }
 
 #[tauri::command]
-fn encrypt_data(state: State<'_, AppState>, plaintext: String) -> CryptoResult {
-    let guard = state.crypto.lock().unwrap();
-    match guard.as_ref() {
-        Some(engine) => match engine.encrypt(&plaintext) {
-            Ok(enc) => CryptoResult {
-                success: true,
-                data: Some(enc),
-                error: None,
-            },
-            Err(e) => CryptoResult {
-                success: false,
-                data: None,
-                error: Some(e),
-            },
-        },
-        None => CryptoResult {
-            success: false,
-            data: None,
-            error: Some("Key not set. Generate or load a key first.".into()),
-        },
-    }
-}
-
-#[tauri::command]
-fn decrypt_data(state: State<'_, AppState>, ciphertext: String) -> CryptoResult {
-    let guard = state.crypto.lock().unwrap();
-    match guard.as_ref() {
-        Some(engine) => match engine.decrypt(&ciphertext) {
-            Ok(dec) => CryptoResult {
-                success: true,
-                data: Some(dec),
-                error: None,
-            },
-            Err(e) => CryptoResult {
-                success: false,
-                data: None,
-                error: Some(e),
-            },
-        },
-        None => CryptoResult {
-            success: false,
-            data: None,
-            error: Some("Key not set. Generate or load a key first.".into()),
-        },
-    }
-}
-
-#[tauri::command]
-fn generate_encrypted_qr(
-    state: State<'_, AppState>,
-    plaintext: String,
-    size: u32,
-) -> CryptoResult {
-    let guard = state.crypto.lock().unwrap();
-    match guard.as_ref() {
-        Some(engine) => {
-            let encrypted = match engine.encrypt(&plaintext) {
-                Ok(enc) => enc,
-                Err(e) => {
-                    return CryptoResult {
-                        success: false,
-                        data: None,
-                        error: Some(e),
-                    }
-                }
-            };
-
-            match qr::generate_qr_png(&encrypted, size) {
-                Ok(png_bytes) => {
-                    let b64 = base64::Engine::encode(
-                        &base64::engine::general_purpose::STANDARD,
-                        &png_bytes,
-                    );
-                    CryptoResult {
-                        success: true,
-                        data: Some(format!("data:image/png;base64,{}", b64)),
-                        error: None,
-                    }
-                }
-                Err(e) => CryptoResult {
-                    success: false,
-                    data: None,
-                    error: Some(e),
-                },
-            }
-        }
-        None => CryptoResult {
-            success: false,
-            data: None,
-            error: Some("Key not set. Generate or load a key first.".into()),
-        },
-    }
-}
-
-#[tauri::command]
-fn scan_barcodes(image_data: Vec<u8>) -> CryptoResult {
+fn scan_barcodes(image_data: Vec<u8>) -> ScanResult {
     match qr::scan_image_for_barcodes(&image_data) {
         Ok(codes) => {
             let json = serde_json::to_string(&codes).unwrap_or_else(|_| "[]".into());
-            CryptoResult {
+            ScanResult {
                 success: true,
                 data: Some(json),
                 error: None,
             }
         }
-        Err(e) => CryptoResult {
+        Err(e) => ScanResult {
             success: false,
             data: None,
             error: Some(e),
@@ -158,8 +52,35 @@ fn scan_barcodes(image_data: Vec<u8>) -> CryptoResult {
 }
 
 #[tauri::command]
-fn get_current_key(state: State<'_, AppState>) -> Option<String> {
-    state.key.lock().unwrap().clone()
+fn capture_screen() -> ScanResult {
+    match screen::capture_full_screen() {
+        Ok(b64) => ScanResult {
+            success: true,
+            data: Some(b64),
+            error: None,
+        },
+        Err(e) => ScanResult {
+            success: false,
+            data: None,
+            error: Some(e),
+        },
+    }
+}
+
+#[tauri::command]
+fn crop_image(image_data: Vec<u8>, x: u32, y: u32, w: u32, h: u32) -> ScanResult {
+    match screen::crop_region(&image_data, x, y, w, h) {
+        Ok(cropped_b64) => ScanResult {
+            success: true,
+            data: Some(cropped_b64),
+            error: None,
+        },
+        Err(e) => ScanResult {
+            success: false,
+            data: None,
+            error: Some(e),
+        },
+    }
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -168,18 +89,12 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_shell::init())
-        .manage(AppState {
-            crypto: Mutex::new(None),
-            key: Mutex::new(None),
-        })
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
-            generate_key,
-            set_key,
-            encrypt_data,
-            decrypt_data,
-            generate_encrypted_qr,
+            generate_qr,
             scan_barcodes,
-            get_current_key,
+            capture_screen,
+            crop_image,
         ])
         .run(tauri::generate_context!())
         .expect("error while running qrtools");

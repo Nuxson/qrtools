@@ -31,16 +31,17 @@
 
     <header class="text-center mb-6">
       <h1 class="text-2xl font-bold text-blue-400">QRTools</h1>
-      <p class="text-dark-400 text-sm">Генерация и сканирование QR-кодов</p>
+      <p class="text-dark-400 text-sm">Генерация и сканирование QR/штрихкодов, распознавание текста</p>
     </header>
 
     <!-- Tabs -->
     <div class="flex gap-1 bg-dark-900 rounded-xl p-1 mb-4">
       <button class="tab flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all bg-blue-600 text-white" data-tab="generate">Генерация</button>
       <button class="tab flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all text-dark-400 hover:text-dark-200 hover:bg-dark-800" data-tab="scan">Сканирование</button>
+      <button class="tab flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all text-dark-400 hover:text-dark-200 hover:bg-dark-800" data-tab="capture" id="tab-capture">Захват</button>
     </div>
 
-    <!-- Генерация -->
+    <!-- Генерация QR -->
     <div id="tab-generate" class="tab-content">
       <div class="bg-dark-900 border border-dark-700 rounded-2xl p-5">
         <h2 class="text-lg font-semibold text-blue-400 mb-4">Создать QR-код</h2>
@@ -63,7 +64,7 @@
       </div>
     </div>
 
-    <!-- Сканирование -->
+    <!-- Сканирование (файл/буфер) -->
     <div id="tab-scan" class="tab-content hidden">
       <div class="bg-dark-900 border border-dark-700 rounded-2xl p-5">
         <h2 class="text-lg font-semibold text-blue-400 mb-4">Сканировать QR/Штрихкод</h2>
@@ -92,6 +93,39 @@
           <textarea id="decrypted-text" class="w-full bg-dark-950 border border-dark-700 rounded-lg px-3 py-2.5 text-dark-100 text-sm resize-y mb-2 focus:outline-none focus:border-blue-500 transition-colors" readonly rows="4"></textarea>
           <button id="btn-copy-decrypted" class="px-4 py-1.5 bg-dark-800 hover:bg-dark-700 border border-dark-600 rounded-lg text-sm text-dark-200 transition-colors">Копировать</button>
         </div>
+      </div>
+    </div>
+
+    <!-- Захват экрана -->
+    <div id="tab-capture" class="tab-content hidden">
+      <div class="bg-dark-900 border border-dark-700 rounded-2xl p-5">
+        <h2 class="text-lg font-semibold text-blue-400 mb-2">Захват области экрана</h2>
+        <p class="text-dark-500 text-xs mb-4">Сделайте скриншот и выделите область с QR-кодом, штрихкодом или текстом</p>
+        <button id="btn-capture" class="w-full py-3 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-lg transition-colors mb-3">Захватить экран</button>
+        <p id="capture-hint" class="text-dark-500 text-xs text-center hidden">Выделите область на скриншоте</p>
+
+        <div id="capture-preview" class="hidden mb-3">
+          <div id="capture-image-wrapper" class="relative inline-block w-full">
+            <img id="capture-image" class="w-full rounded-lg border border-dark-700" alt="Screenshot" />
+            <div id="capture-overlay" class="hidden"></div>
+          </div>
+        </div>
+
+        <div id="capture-results" class="hidden">
+          <div class="border-t border-dark-700 pt-3">
+            <div id="capture-codes" class="hidden mb-3">
+              <h3 class="text-sm font-medium text-dark-400 mb-2">QR/Штрихкоды:</h3>
+              <div id="capture-codes-list" class="space-y-1.5 mb-2"></div>
+            </div>
+            <div id="capture-text" class="hidden mb-3">
+              <h3 class="text-sm font-medium text-dark-400 mb-2">Распознанный текст:</h3>
+              <textarea id="capture-ocr-text" class="w-full bg-dark-950 border border-dark-700 rounded-lg px-3 py-2.5 text-dark-100 text-sm resize-y mb-2 focus:outline-none focus:border-blue-500 transition-colors" readonly rows="4"></textarea>
+            </div>
+            <button id="btn-copy-capture" class="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors hidden">Копировать результат</button>
+          </div>
+        </div>
+
+        <div id="capture-status" class="hidden px-3 py-2 rounded-lg text-sm mb-3"></div>
       </div>
     </div>
 
