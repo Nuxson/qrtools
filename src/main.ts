@@ -17,8 +17,7 @@ async function detectPlatform() {
   } catch {
     isTauri = false;
     if ("serviceWorker" in navigator) {
-      const swUrl = new URL("sw.js", import.meta.url).href;
-      navigator.serviceWorker.register(swUrl, { scope: "./" }).catch(() => {});
+      navigator.serviceWorker.register("./sw.js", { scope: "./" }).catch(() => {});
     }
     setStatus("Режим: PWA (веб/iOS). Загрузите ключ для начала.");
   }
